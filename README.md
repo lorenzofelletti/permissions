@@ -1,5 +1,6 @@
 # Permissions
 ## Easy permissions management library for Android
+[![](https://jitpack.io/v/lorenzofelletti/Permissions.svg)](https://jitpack.io/#lorenzofelletti/Permissions)
 
 An easy to use permissions management library.
 
