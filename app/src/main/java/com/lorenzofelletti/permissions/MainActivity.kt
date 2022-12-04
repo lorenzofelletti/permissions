@@ -5,13 +5,12 @@ import android.os.Bundle
 import android.util.Log
 
 class MainActivity : AppCompatActivity() {
-    private val permissionsUtilities = PermissionsUtilities
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        permissionsUtilities.buildRequestResultsDispatcher {
+        PermissionsUtilities.buildRequestResultsDispatcher {
             onGranted(POSITION_REQUEST_CODE) {
                 // Do something
                 Log.d(TAG, "onCreate: Position permission granted")
@@ -22,7 +21,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        permissionsUtilities.checkPermissions(
+        PermissionsUtilities.checkPermissions(
             this,
             POSITION_REQUIRED_PERMISSIONS,
             POSITION_REQUEST_CODE
@@ -35,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        permissionsUtilities.dispatchOnRequestPermissionsResult(requestCode, grantResults)
+        PermissionsUtilities.dispatchOnRequestPermissionsResult(requestCode, grantResults)
     }
 
     companion object {
