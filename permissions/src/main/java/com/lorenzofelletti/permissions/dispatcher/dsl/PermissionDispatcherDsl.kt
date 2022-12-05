@@ -1,0 +1,7 @@
+package com.lorenzofelletti.permissions.dispatcher.dsl
+
+@DslMarker
+annotation class PermissionDispatcherDsl
+
+@PermissionDispatcherDsl
+abstract class PermissionDispatcher
