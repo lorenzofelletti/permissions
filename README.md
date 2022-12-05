@@ -41,7 +41,7 @@ To use it, just:
       }
   }
   ```
-* Call `PermissionsUtilities.checkPermissions` where you want to check for a set of permissions (and ask them if not granted)
+* Call `permissionManager.checkRequestAndDispatch` where you want to check for a set of permissions (and ask them if not granted)
   * Example: in your Activity, where you want to check (and request) permissions add
   ```Kotlin
   permissionManager.checkRequestAndDispatch(
