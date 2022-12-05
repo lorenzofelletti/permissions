@@ -31,20 +31,6 @@ android {
     }
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.release
-
-                groupId = 'com.github.lorenzofelletti'
-                artifactId = 'permissions'
-                version = '0.1.0'
-            }
-        }
-    }
-}
-
 dependencies {
 
     implementation 'androidx.core:core-ktx:1.9.0'
