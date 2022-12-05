@@ -52,8 +52,8 @@ publishing {
     publications {
         release(MavenPublication) {
             groupId 'com.github.lorenzofelletti'
-            artifactId 'Permissions'
-            version '0.2.1'
+            artifactId 'permissions'
+            version '0.2.0'
 
             afterEvaluate {
                 from components.release
