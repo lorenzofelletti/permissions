@@ -1,4 +1,4 @@
-package com.lorenzofelletti.permissions
+package com.lorenzofelletti.permissionsexample
 
 import org.junit.Test
 

@@ -1,8 +1,10 @@
-package com.lorenzofelletti.permissions
+package com.lorenzofelletti.permissionsexample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import com.lorenzofelletti.permissions.PermissionManager
+import com.lorenzofelletti.permissions.R
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.checkPermissions
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnDenied
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnGranted
