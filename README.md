@@ -29,7 +29,7 @@ To use it, just:
 * Build the RequestResultsDispatcher
   * Example: in the `MainActivity`'s `onCreate` function add
   ```Kotlin
-  permissionsUtilities.buildRequestResultsDispatcher {
+  permissionManager.buildRequestResultsDispatcher {
       withRequestCode(POSITION_REQUEST_CODE) {
           checkPermissions(POSITION_REQUIRED_PERMISSIONS)
           doOnGranted {
@@ -44,9 +44,7 @@ To use it, just:
 * Call `PermissionsUtilities.checkPermissions` where you want to check for a set of permissions (and ask them if not granted)
   * Example: in your Activity, where you want to check (and request) permissions add
   ```Kotlin
-  PermissionsUtilities.checkPermissions(
-            this,
-            POSITION_REQUIRED_PERMISSIONS,
+  permissionManager.checkRequestAndDispatch(
             POSITION_REQUEST_CODE
         )
   ```
@@ -59,6 +57,6 @@ To use it, just:
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        PermissionsUtilities.dispatchOnRequestPermissionsResult(requestCode, grantResults)
+        permissionManager.dispatchOnRequestPermissionsResult(requestCode, grantResults)
     }
   ```
