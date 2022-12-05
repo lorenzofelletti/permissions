@@ -1,5 +1,8 @@
 package com.lorenzofelletti.permissions.dispatcher
 
+import android.app.Activity
+import android.app.AlertDialog
+import com.lorenzofelletti.permissions.PermissionManager
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcher
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
 
@@ -9,7 +12,10 @@ import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
  * It contains the permissions associated to the request, and the actions to be dispatched
  * in case the permissions are granted or denied.
  */
-class DispatcherEntry : PermissionDispatcher() {
+class DispatcherEntry(
+    private val manager: PermissionManager,
+    private val requestCode: Int
+) : PermissionDispatcher() {
     /**
      * The permissions associated to this entry
      */
@@ -26,6 +32,12 @@ class DispatcherEntry : PermissionDispatcher() {
      * The action to be dispatched if the permissions are denied.
      */
     var onDenied: () -> Unit = {}
+        private set
+
+    /**
+     * The rationale to be shown
+     */
+    var onShowRationale: (List<String>, requestCode: Int) -> Unit = { _, _ -> }
         private set
 
     override fun equals(other: Any?): Boolean {
@@ -73,6 +85,40 @@ class DispatcherEntry : PermissionDispatcher() {
         @PermissionDispatcherDsl
         fun DispatcherEntry.doOnDenied(onDenied: () -> Unit) {
             this.onDenied = onDenied
+        }
+
+        /**
+         * Allows to show a rationale to the user if [Activity.shouldShowRequestPermissionRationale]
+         * returns true for any of the permissions.
+         *
+         * Use this method if [DispatcherEntry.showRationaleDialog] does not fit your needs.
+         *
+         * @param onShowRationale
+         */
+        @PermissionDispatcherDsl
+        fun DispatcherEntry.rationale(onShowRationale: (List<String>, Int) -> Unit) {
+            this.onShowRationale = onShowRationale
+        }
+
+        /**
+         * Shows a rationale dialog to the user.
+         * If the user clicks on the positive button, the permission request will be performed, else
+         * not.
+         *
+         * @param message the message to be shown
+         */
+        @PermissionDispatcherDsl
+        fun DispatcherEntry.showRationaleDialog(message: String) {
+            rationale { _, _ ->
+                AlertDialog.Builder(manager.activity)
+                    .setMessage(message)
+                    .setPositiveButton("OK") { _, _ ->
+                        manager.checkRequestAndDispatch(requestCode, comingFromRationale = true)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .create()
+                    .show()
+            }
         }
     }
 }

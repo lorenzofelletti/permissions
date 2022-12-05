@@ -1,12 +1,14 @@
 package com.lorenzofelletti.permissionsexample
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import com.lorenzofelletti.permissions.PermissionManager
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.checkPermissions
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnDenied
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnGranted
+import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.showRationaleDialog
 import com.lorenzofelletti.permissions.dispatcher.RequestResultsDispatcher.Companion.withRequestCode
 
 class MainActivity : AppCompatActivity() {
@@ -21,6 +23,7 @@ class MainActivity : AppCompatActivity() {
         permissionsUtilities.buildRequestResultsDispatcher {
             withRequestCode(POSITION_REQUEST_CODE) {
                 checkPermissions(POSITION_REQUIRED_PERMISSIONS)
+                showRationaleDialog(message = "Location permission is required to use this feature")
                 doOnGranted {
                     Log.d(TAG, "Location permission granted")
                 }
@@ -33,12 +36,17 @@ class MainActivity : AppCompatActivity() {
         permissionsUtilities.checkRequestAndDispatch(
             POSITION_REQUEST_CODE
         )
+
+        val button: Button = findViewById(R.id.button)
+        button.setOnClickListener {
+            permissionsUtilities.checkRequestAndDispatch(
+                POSITION_REQUEST_CODE
+            )
+        }
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionsUtilities.dispatchOnRequestPermissionsResult(requestCode, grantResults)

@@ -1,13 +1,17 @@
 package com.lorenzofelletti.permissions.dispatcher
 
+import android.app.Activity
+import android.app.AlertDialog
 import android.content.pm.PackageManager
+import com.lorenzofelletti.permissions.PermissionManager
+import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.rationale
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcher
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
 
 /**
  * A dispatcher for the results of permission requests.
  */
-class RequestResultsDispatcher : PermissionDispatcher() {
+class RequestResultsDispatcher(private val manager: PermissionManager) : PermissionDispatcher() {
     private val entries: MutableMap<Int, DispatcherEntry> = mutableMapOf()
 
     fun dispatchAction(requestCode: Int, grantResults: IntArray): (() -> Unit)? =
@@ -20,6 +24,9 @@ class RequestResultsDispatcher : PermissionDispatcher() {
         entries[requestCode]?.permissions
 
     internal fun getOnGranted(requestCode: Int): (() -> Unit)? = entries[requestCode]?.onGranted
+
+    internal fun getOnShowRationale(requestCode: Int): ((List<String>, Int) -> Unit)? =
+        entries[requestCode]?.onShowRationale
 
     /**
      * Checks the results of a permission request
@@ -43,8 +50,10 @@ class RequestResultsDispatcher : PermissionDispatcher() {
          * @param init A lambda that initializes the entry
          */
         @PermissionDispatcherDsl
-        fun RequestResultsDispatcher.withRequestCode(requestCode: Int, init: DispatcherEntry.() -> Unit) {
-            entries[requestCode] = DispatcherEntry().apply(init)
+        fun RequestResultsDispatcher.withRequestCode(
+            requestCode: Int, init: DispatcherEntry.() -> Unit
+        ) {
+            entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
         }
     }
 }

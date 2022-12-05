@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import com.lorenzofelletti.permissions.dispatcher.RequestResultsDispatcher
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
 
@@ -22,7 +23,7 @@ import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
  *
  * @param activity The [Activity] that needs to manage the permissions
  */
-class PermissionManager(private val activity: Activity) {
+class PermissionManager(val activity: Activity) {
     private lateinit var requestResultsDispatcher: RequestResultsDispatcher
 
     /**
@@ -33,7 +34,7 @@ class PermissionManager(private val activity: Activity) {
      */
     @PermissionDispatcherDsl
     fun buildRequestResultsDispatcher(init: RequestResultsDispatcher.() -> Unit) {
-        requestResultsDispatcher = RequestResultsDispatcher().apply(init)
+        requestResultsDispatcher = RequestResultsDispatcher(this).apply(init)
     }
 
     /**
@@ -47,19 +48,31 @@ class PermissionManager(private val activity: Activity) {
      *
      * @param requestCode The request code associated to the permissions
      */
-    fun checkRequestAndDispatch(requestCode: Int) {
+    fun checkRequestAndDispatch(requestCode: Int, comingFromRationale: Boolean = false) {
         val permissions = requestResultsDispatcher.getPermissions(requestCode)
             ?: throw UnhandledRequestCodeException(requestCode)
         val permissionsNotGranted = permissions.filter { permission ->
             ActivityCompat.checkSelfPermission(
-                activity.baseContext, permission
+                activity, permission
             ) != PackageManager.PERMISSION_GRANTED
+
         }.toTypedArray()
 
-        if (permissionsNotGranted.isNotEmpty()) {
-            ActivityCompat.requestPermissions(activity, permissionsNotGranted, requestCode)
-        } else {
+        if (permissionsNotGranted.isEmpty()) {
+            // All permissions are granted
             requestResultsDispatcher.getOnGranted(requestCode)?.invoke()
+        } else {
+            // Some permissions are not granted
+            val shouldShowRationale = permissionsNotGranted.any { permission ->
+                shouldShowRequestPermissionRationale(activity, permission)
+            }
+
+            if (shouldShowRationale && !comingFromRationale) {
+                requestResultsDispatcher.getOnShowRationale(requestCode)
+                    ?.invoke(permissionsNotGranted.toList(), requestCode)
+            } else {
+                ActivityCompat.requestPermissions(activity, permissionsNotGranted, requestCode)
+            }
         }
     }
 
