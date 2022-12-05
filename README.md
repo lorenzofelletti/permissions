@@ -11,6 +11,11 @@ To use it, just:
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
   ```
+* Create a `PermissionManager` in your `Activity`
+  * Example: in your `MainActivity`
+  ```Kotlin
+    private val permissionManager = PermissionManager(this)
+    ```
 * Decide a request code for each set of permissions that you will require simultaneously (each request code is a positive integer of your choice, but do not use the same code for different set of permissions)
   * Example: add to your `MainActivity`
   ```Kotlin
@@ -25,16 +30,17 @@ To use it, just:
 * Build the RequestResultsDispatcher
   * Example: in the `MainActivity`'s `onCreate` function add
   ```Kotlin
-  PermissionsUtilities.buildRequestResultsDispatcher {
-            onGranted(POSITION_REQUEST_CODE) {
-                // Do something
-                Log.d(TAG, "onCreate: Position permission granted")
-            }
-            onDenied(POSITION_REQUEST_CODE) {
-                // Do something else
-                Log.d(TAG, "onCreate: Position permission denied")
-            }
-        }
+  permissionsUtilities.buildRequestResultsDispatcher {
+      withRequestCode(POSITION_REQUEST_CODE) {
+          checkPermissions(POSITION_REQUIRED_PERMISSIONS)
+          doOnGranted {
+              Log.d(TAG, "Location permission granted") 
+          }
+          doOnDenied {
+              Log.d(TAG, "Location permission denied")
+          }
+      }
+  }
   ```
 * Call `PermissionsUtilities.checkPermissions` where you want to check for a set of permissions (and ask them if not granted)
   * Example: in your Activity, where you want to check (and request) permissions add

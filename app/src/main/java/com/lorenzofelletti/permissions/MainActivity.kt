@@ -3,27 +3,34 @@ package com.lorenzofelletti.permissions
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.checkPermissions
+import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnDenied
+import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnGranted
+import com.lorenzofelletti.permissions.dispatcher.RequestResultsDispatcher.Companion.withRequestCode
+
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var permissionsUtilities: PermissionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        PermissionsUtilities.buildRequestResultsDispatcher {
-            onGranted(POSITION_REQUEST_CODE) {
-                // Do something
-                Log.d(TAG, "onCreate: Position permission granted")
-            }
-            onDenied(POSITION_REQUEST_CODE) {
-                // Do something else
-                Log.d(TAG, "onCreate: Position permission denied")
+        permissionsUtilities = PermissionManager(this)
+
+        permissionsUtilities.buildRequestResultsDispatcher {
+            withRequestCode(POSITION_REQUEST_CODE) {
+                checkPermissions(POSITION_REQUIRED_PERMISSIONS)
+                doOnGranted {
+                    Log.d(TAG, "Location permission granted")
+                }
+                doOnDenied {
+                    Log.d(TAG, "Location permission denied")
+                }
             }
         }
 
-        PermissionsUtilities.checkPermissions(
-            this,
-            POSITION_REQUIRED_PERMISSIONS,
+        permissionsUtilities.checkRequestAndDispatch(
             POSITION_REQUEST_CODE
         )
     }
@@ -34,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        PermissionsUtilities.dispatchOnRequestPermissionsResult(requestCode, grantResults)
+        permissionsUtilities.dispatchOnRequestPermissionsResult(requestCode, grantResults)
     }
 
     companion object {
