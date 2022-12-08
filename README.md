@@ -1,9 +1,13 @@
 # Permissions
+[![](https://jitpack.io/v/lorenzofelletti/permissions.svg)](https://jitpack.io/#lorenzofelletti/permissions)
+
 ## Easy permissions management library for Android
 
-An easy to use permissions management library.
+An easy to use permissions management library designed to be used with Kotlin.
 
-To use it, just:
+The library is deployed on JitPack here, follow the steps indicated in the link to add it to your project.
+
+To use it in your project, just:
 * Declare the permissions your app will use in your application's Manifest
   * Example: add to the app `AndroidManifest.xml`
   ```xml

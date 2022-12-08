@@ -37,7 +37,7 @@ class DispatcherEntry(
     /**
      * The rationale to be shown
      */
-    var onShowRationale: (List<String>, requestCode: Int) -> Unit = { _, _ -> }
+    var onShowRationale: ((List<String>, requestCode: Int) -> Unit)? = null
         private set
 
     override fun equals(other: Any?): Boolean {

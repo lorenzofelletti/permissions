@@ -68,12 +68,21 @@ class PermissionManager(val activity: Activity) {
             }
 
             if (shouldShowRationale && !comingFromRationale) {
-                requestResultsDispatcher.getOnShowRationale(requestCode)
-                    ?.invoke(permissionsNotGranted.toList(), requestCode)
+                dispatchRationale(permissionsNotGranted, requestCode)
             } else {
                 ActivityCompat.requestPermissions(activity, permissionsNotGranted, requestCode)
             }
         }
+    }
+
+    private fun dispatchRationale(permissionsNotGranted: Array<out String>, requestCode: Int) {
+        val toInvoke = requestResultsDispatcher.getOnShowRationale(requestCode) ?: fun(
+            _: List<String>,
+            requestCode: Int
+        ) {
+            checkRequestAndDispatch(requestCode, true)
+        }
+        toInvoke.invoke(permissionsNotGranted.toList(), requestCode)
     }
 
     /**
