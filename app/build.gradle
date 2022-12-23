@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "com.lorenzofelletti.permissionsexample"
-        minSdk 26
+        minSdk 21
         targetSdk 33
         versionCode 1
         versionName "1.0"
