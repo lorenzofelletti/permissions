@@ -1,10 +1,7 @@
 package com.lorenzofelletti.permissions.dispatcher
 
-import android.app.Activity
-import android.app.AlertDialog
 import android.content.pm.PackageManager
 import com.lorenzofelletti.permissions.PermissionManager
-import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.rationale
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcher
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
 
@@ -12,7 +9,9 @@ import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
  * A dispatcher for the results of permission requests.
  */
 class RequestResultsDispatcher(private val manager: PermissionManager) : PermissionDispatcher() {
-    private val entries: MutableMap<Int, DispatcherEntry> = mutableMapOf()
+    /** Maps the entries of the dispatcher with the request codes. */
+    var entries: MutableMap<Int, DispatcherEntry> = mutableMapOf()
+        private set
 
     fun dispatchAction(requestCode: Int, grantResults: IntArray): (() -> Unit)? =
         when (checkGrantResults(grantResults)) {
@@ -54,6 +53,80 @@ class RequestResultsDispatcher(private val manager: PermissionManager) : Permiss
             requestCode: Int, init: DispatcherEntry.() -> Unit
         ) {
             entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
+        }
+
+        /**
+         * Removes an entry from the dispatcher.
+         *
+         * @param requestCode The request code of the entry to be removed
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.removeEntry(requestCode: Int) {
+            entries.remove(requestCode)
+        }
+
+        /**
+         * Removes an entry from the dispatcher.
+         *
+         * @param entry The entry to be removed
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.removeEntry(entry: DispatcherEntry) {
+            entries.remove(entry.requestCode)
+        }
+
+        /**
+         * Adds a new entry to the dispatcher if it doesn't already exist.
+         *
+         * @param entry The entry to be added
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.addEntry(entry: DispatcherEntry) {
+            if (entries[entry.requestCode] == null) {
+                entries[entry.requestCode] = entry
+            }
+        }
+
+        /**
+         * Adds a new entry to the dispatcher if it doesn't already exist.
+         *
+         * @param requestCode The request code associated to the entry
+         * @param init A lambda that initializes the entry
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.addEntry(requestCode: Int, init: DispatcherEntry.() -> Unit) {
+            if (entries[requestCode] == null) {
+                entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
+            }
+        }
+
+        /**
+         * Replaces an entry in the dispatcher if present, otherwise adds it.
+         *
+         * @param entry The entry to be replaced or added
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.replaceEntry(entry: DispatcherEntry) {
+            entries[entry.requestCode] = entry
+        }
+
+        /**
+         * Replaces an entry in the dispatcher if present, otherwise adds it.
+         *
+         * @param requestCode The request code associated to the entry
+         * @param init A lambda that initializes the entry
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.replaceEntry(requestCode: Int, init: DispatcherEntry.() -> Unit) {
+            entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
+        }
+
+        /**
+         * Removes all entries from the dispatcher.
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.clearEntries() {
+            entries.clear()
         }
     }
 }
