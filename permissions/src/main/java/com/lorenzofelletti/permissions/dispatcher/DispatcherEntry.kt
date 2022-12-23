@@ -14,7 +14,7 @@ import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
  */
 class DispatcherEntry(
     private val manager: PermissionManager,
-    private val requestCode: Int
+    val requestCode: Int
 ) : PermissionDispatcher() {
     /**
      * The permissions associated to this entry
