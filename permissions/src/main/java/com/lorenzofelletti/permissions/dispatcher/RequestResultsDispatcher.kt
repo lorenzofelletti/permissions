@@ -2,6 +2,8 @@ package com.lorenzofelletti.permissions.dispatcher
 
 import android.content.pm.PackageManager
 import com.lorenzofelletti.permissions.PermissionManager
+import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnDenied
+import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnGranted
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcher
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
 
@@ -111,13 +113,41 @@ class RequestResultsDispatcher(private val manager: PermissionManager) : Permiss
         }
 
         /**
+         * Replaces an entry's onGranted action in the dispatcher if present, otherwise it does nothing.
+         *
+         * @param requestCode The request code associated to the entry
+         * @param onGranted The new onGranted action
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.replaceEntryOnGranted(
+            requestCode: Int,
+            onGranted: () -> Unit
+        ) {
+            entries[requestCode]?.doOnGranted(onGranted)
+        }
+
+        /**
+         * Replaces an entry's onDenied action in the dispatcher if present, otherwise it does nothing.
+         *
+         * @param requestCode The request code associated to the entry
+         * @param onDenied The new onDenied action
+         */
+        @PermissionDispatcherDsl
+        fun RequestResultsDispatcher.replaceEntryOnDenied(requestCode: Int, onDenied: () -> Unit) {
+            entries[requestCode]?.doOnDenied(onDenied)
+        }
+
+        /**
          * Replaces an entry in the dispatcher if present, otherwise adds it.
          *
          * @param requestCode The request code associated to the entry
          * @param init A lambda that initializes the entry
          */
         @PermissionDispatcherDsl
-        fun RequestResultsDispatcher.replaceEntry(requestCode: Int, init: DispatcherEntry.() -> Unit) {
+        fun RequestResultsDispatcher.replaceEntry(
+            requestCode: Int,
+            init: DispatcherEntry.() -> Unit
+        ) {
             entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
         }
 
