@@ -63,7 +63,7 @@ fun DispatcherEntry.rationale(onShowRationale: (List<String>, Int) -> Unit) {
  */
 @PermissionDispatcherDsl
 fun DispatcherEntry.showRationaleDialog(message: String) {
-    showRationaleDialog(message)
+    showRationaleDialog(message, null, null, null)
 }
 
 /**
@@ -79,8 +79,8 @@ fun DispatcherEntry.showRationaleDialog(message: String) {
 @PermissionDispatcherDsl
 fun DispatcherEntry.showRationaleDialog(
     message: String,
-    positiveButtonText: String = "OK",
-    negativeButtonText: String = "Cancel",
+    positiveButtonText: String? = "OK",
+    negativeButtonText: String? = "Cancel",
     onNegativeButtonPressed: (() -> Unit)?
 ) {
     rationale { _, _ ->
