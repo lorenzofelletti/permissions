@@ -5,11 +5,7 @@ import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.lorenzofelletti.permissions.PermissionManager
-import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.checkPermissions
-import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnDenied
-import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnGranted
-import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.showRationaleDialog
-import com.lorenzofelletti.permissions.dispatcher.RequestResultsDispatcher.Companion.withRequestCode
+import com.lorenzofelletti.permissions.dispatcher.dsl.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var permissionsUtilities: PermissionManager
@@ -20,7 +16,7 @@ class MainActivity : AppCompatActivity() {
 
         permissionsUtilities = PermissionManager(this)
 
-        permissionsUtilities.buildRequestResultsDispatcher {
+        permissionsUtilities buildRequestResultsDispatcher {
             withRequestCode(POSITION_REQUEST_CODE) {
                 checkPermissions(POSITION_REQUIRED_PERMISSIONS)
                 showRationaleDialog(message = "Location permission is required to use this feature")
@@ -33,9 +29,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        permissionsUtilities.checkRequestAndDispatch(
-            POSITION_REQUEST_CODE
-        )
+        permissionsUtilities checkRequestAndDispatch POSITION_REQUEST_CODE
 
         val button: Button = findViewById(R.id.button)
         button.setOnClickListener {
