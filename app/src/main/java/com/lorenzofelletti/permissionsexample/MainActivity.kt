@@ -8,15 +8,15 @@ import com.lorenzofelletti.permissions.PermissionManager
 import com.lorenzofelletti.permissions.dispatcher.dsl.*
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var permissionsUtilities: PermissionManager
+    private lateinit var permissionManager: PermissionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        permissionsUtilities = PermissionManager(this)
+        permissionManager = PermissionManager(this)
 
-        permissionsUtilities buildRequestResultsDispatcher {
+        permissionManager buildRequestResultsDispatcher {
             withRequestCode(POSITION_REQUEST_CODE) {
                 checkPermissions(POSITION_REQUIRED_PERMISSIONS)
                 showRationaleDialog(message = "Location permission is required to use this feature")
@@ -29,11 +29,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        permissionsUtilities checkRequestAndDispatch POSITION_REQUEST_CODE
+        permissionManager checkRequestAndDispatch POSITION_REQUEST_CODE
 
         val button: Button = findViewById(R.id.button)
         button.setOnClickListener {
-            permissionsUtilities.checkRequestAndDispatch(
+            permissionManager.checkRequestAndDispatch(
                 POSITION_REQUEST_CODE
             )
         }
@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        permissionsUtilities.dispatchOnRequestPermissionsResult(requestCode, grantResults)
+        permissionManager.dispatchOnRequestPermissionsResult(requestCode, grantResults)
     }
 
     companion object {

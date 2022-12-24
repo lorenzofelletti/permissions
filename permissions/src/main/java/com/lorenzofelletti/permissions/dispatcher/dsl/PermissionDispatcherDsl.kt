@@ -1,6 +1,9 @@
+@file:JvmName("PermissionDispatcherDslContainer")
+
 package com.lorenzofelletti.permissions.dispatcher.dsl
 
 import android.app.AlertDialog
+import android.app.Dialog
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry
 import com.lorenzofelletti.permissions.dispatcher.RequestResultsDispatcher
 
@@ -56,18 +59,6 @@ fun DispatcherEntry.rationale(onShowRationale: (List<String>, Int) -> Unit) {
 
 /**
  * Shows a rationale dialog to the user.
- * If the user clicks on the positive button, the permission request will be performed, else
- * not.
- *
- * @param message the message to be shown
- */
-@PermissionDispatcherDsl
-fun DispatcherEntry.showRationaleDialog(message: String) {
-    showRationaleDialog(message, null, null, null)
-}
-
-/**
- * Shows a rationale dialog to the user.
  * If the user clicks on the positive button, the permission request will be performed,
  * otherwise a custom action will be performed (if specified).
  *
@@ -79,17 +70,48 @@ fun DispatcherEntry.showRationaleDialog(message: String) {
 @PermissionDispatcherDsl
 fun DispatcherEntry.showRationaleDialog(
     message: String,
-    positiveButtonText: String? = "OK",
-    negativeButtonText: String? = "Cancel",
-    onNegativeButtonPressed: (() -> Unit)?
+    positiveButtonText: String = "OK",
+    negativeButtonText: String = "Cancel",
+    onNegativeButtonPressed: (() -> Unit) = {}
 ) {
     rationale { _, _ ->
-        AlertDialog.Builder(manager.activity).setMessage(message)
-            .setPositiveButton(positiveButtonText) { _, _ ->
-                manager.checkRequestAndDispatch(requestCode, comingFromRationale = true)
-            }.setNegativeButton(negativeButtonText) { _, _ ->
-                onNegativeButtonPressed?.invoke()
-            }.show()
+        manager.activity.runOnUiThread {
+            AlertDialog.Builder(manager.activity).setMessage(message)
+                .setPositiveButton(positiveButtonText) { _, _ ->
+                    manager.checkRequestAndDispatch(requestCode, comingFromRationale = true)
+                }.setNegativeButton(negativeButtonText) { _, _ ->
+                    onNegativeButtonPressed.invoke()
+                }.show()
+        }
+    }
+}
+
+/**
+ * Sets the [AlertDialog] to be shown when the rationale is needed.
+ *
+ * By  using this method, you can customize the dialog as you want, but do not call [Dialog.show] on
+ * it, as it will be called automatically, just call [Dialog.create] instead.
+ * Moreover, it is your responsibility to call the permission request when the positive button is
+ * pressed.
+ *
+ * Example (Kotlin):
+ * ```
+ * val dialog = AlertDialog.Builder(this).setMessage("Message").
+ *     setPositiveButton("Proceed") {
+ *         manager.checkRequestAndDispatch(requestCode, comingFromRationale = true)
+ *     }.create()
+ * ```
+ *
+ * @param dialog the dialog to be shown
+ */
+@PermissionDispatcherDsl
+fun DispatcherEntry.showRationaleDialog(
+    dialog: AlertDialog,
+) {
+    rationale { _, _ ->
+        manager.activity.runOnUiThread {
+            dialog.show()
+        }
     }
 }
 
@@ -149,8 +171,7 @@ fun RequestResultsDispatcher.addEntry(requestCode: Int, init: DispatcherEntry.()
  */
 @PermissionDispatcherDsl
 fun RequestResultsDispatcher.replaceEntryOnGranted(
-    requestCode: Int,
-    onGranted: () -> Unit
+    requestCode: Int, onGranted: () -> Unit
 ) {
     entries[requestCode]?.doOnGranted(onGranted)
 }
@@ -174,8 +195,7 @@ fun RequestResultsDispatcher.replaceEntryOnDenied(requestCode: Int, onDenied: ()
  */
 @PermissionDispatcherDsl
 fun RequestResultsDispatcher.replaceEntry(
-    requestCode: Int,
-    init: DispatcherEntry.() -> Unit
+    requestCode: Int, init: DispatcherEntry.() -> Unit
 ) {
     entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
 }
