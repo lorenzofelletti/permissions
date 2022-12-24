@@ -12,8 +12,9 @@ import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
 /**
  * A class that manages the permissions of an [Activity].
  *
- * Use its [buildRequestResultsDispatcher] method to build a [RequestResultsDispatcher] that will
- * be used to dispatch the results of the permission requests.
+ * Use the [buildRequestResultsDispatcher] method to build a [RequestResultsDispatcher] that will
+ * be used to dispatch the results of the permission requests. Note that this is mandatory to
+ * use this class correctly.
  *
  * Then, use its [checkRequestAndDispatch] method to check if the permissions are granted and
  * dispatch the appropriate action.
@@ -24,6 +25,7 @@ import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcherDsl
  * @param activity The [Activity] that needs to manage the permissions
  */
 class PermissionManager(val activity: Activity) {
+    /** The dispatcher that will be used to dispatch the results of the permission requests. */
     lateinit var dispatcher: RequestResultsDispatcher
         private set
 
@@ -31,10 +33,23 @@ class PermissionManager(val activity: Activity) {
      * Builds a [RequestResultsDispatcher] object that is used to dispatch the results of the
      * permission requests to the appropriate actions.
      *
+     * Example:
+     * ```
+     * val manager = PermissionManager(this)
+     * manager buildRequestResultsDispatcher {
+     *   withRequestCode(0) {
+     *     checkPermissions("permission1", "permission2")
+     *     showRationaleDialog("Permissions are needed for feature X")
+     *     doOnGranted { ... }
+     *     doOnDenied { ... }
+     *   }
+     * }
+     * ```
+     *
      * @param init A lambda that initializes the [RequestResultsDispatcher] object.
      */
     @PermissionDispatcherDsl
-    fun buildRequestResultsDispatcher(init: RequestResultsDispatcher.() -> Unit) {
+    infix fun buildRequestResultsDispatcher(init: RequestResultsDispatcher.() -> Unit) {
         dispatcher = RequestResultsDispatcher(this).apply(init)
     }
 
@@ -48,10 +63,13 @@ class PermissionManager(val activity: Activity) {
      * [RequestResultsDispatcher] is dispatched.
      *
      * @param requestCode The request code associated to the permissions
+     * @param comingFromRationale true if the method is called from the rationale, defaults to false
      */
     fun checkRequestAndDispatch(requestCode: Int, comingFromRationale: Boolean = false) {
-        val permissions = dispatcher.getPermissions(requestCode)
-            ?: throw UnhandledRequestCodeException(requestCode)
+        val permissions =
+            dispatcher.getPermissions(requestCode) ?: throw UnhandledRequestCodeException(
+                requestCode
+            )
         val permissionsNotGranted = permissions.filter { permission ->
             ActivityCompat.checkSelfPermission(
                 activity, permission
@@ -76,14 +94,19 @@ class PermissionManager(val activity: Activity) {
         }
     }
 
-    private fun dispatchRationale(permissionsNotGranted: Array<out String>, requestCode: Int) {
-        val toInvoke = dispatcher.getOnShowRationale(requestCode) ?: fun(
-            _: List<String>,
-            requestCode: Int
-        ) {
-            checkRequestAndDispatch(requestCode, true)
-        }
-        toInvoke.invoke(permissionsNotGranted.toList(), requestCode)
+    /**
+     * Checks if the permissions are granted, and dispatches the appropriate action based on the
+     * results.
+     *
+     * If some permissions are not granted, the user is asked to grant them.
+     *
+     * If all the permissions are already granted, the action associated to onGranted in the
+     * [RequestResultsDispatcher] is dispatched.
+     *
+     * @param requestCode The request code associated to the permissions
+     */
+    infix fun checkRequestAndDispatch(requestCode: Int) {
+        checkRequestAndDispatch(requestCode, false)
     }
 
     /**
@@ -108,8 +131,10 @@ class PermissionManager(val activity: Activity) {
      * @return true if all permissions are granted, false otherwise
      */
     fun checkPermissionsGranted(requestCode: Int): Boolean {
-        val permissions = dispatcher.getPermissions(requestCode)
-            ?: throw UnhandledRequestCodeException(requestCode)
+        val permissions =
+            dispatcher.getPermissions(requestCode) ?: throw UnhandledRequestCodeException(
+                requestCode
+            )
         return checkPermissionsGranted(permissions)
     }
 
@@ -140,6 +165,23 @@ class PermissionManager(val activity: Activity) {
             context, permission
         ) == PackageManager.PERMISSION_GRANTED
     }
+
+    /**
+     * Dispatches the rationale action associated to the request code, if any.
+     *
+     * @param permissionsNotGranted The permissions that are not granted
+     * @param requestCode The request code associated to the permissions
+     */
+    private fun dispatchRationale(permissionsNotGranted: Array<out String>, requestCode: Int) {
+        /* if a rationale is defined, dispatch it, otherwise it calls checkRequestAndDispatch with
+         * comingFromRationale = true */
+        val toInvoke = dispatcher.getOnShowRationale(requestCode) ?: fun(
+            _: List<String>, requestCode: Int
+        ) {
+            checkRequestAndDispatch(requestCode, true)
+        }
+        toInvoke.invoke(permissionsNotGranted.toList(), requestCode)
+    }
 }
 
 /**
@@ -147,6 +189,5 @@ class PermissionManager(val activity: Activity) {
  */
 class UnhandledRequestCodeException(requestCode: Int) : Throwable() {
     override val message: String =
-        "Request code $requestCode is not handled by the RequestResultsDispatcher object. " +
-                "Please add a withRequestCode block to the buildRequestResultsDispatcher function."
+        "Request code $requestCode is not handled by the RequestResultsDispatcher object. Please add a withRequestCode block to the buildRequestResultsDispatcher function."
 }

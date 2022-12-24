@@ -2,8 +2,9 @@ package com.lorenzofelletti.permissions
 
 import android.app.Activity
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry
-import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnDenied
-import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry.Companion.doOnGranted
+import com.lorenzofelletti.permissions.dispatcher.dsl.checkPermissions
+import com.lorenzofelletti.permissions.dispatcher.dsl.doOnDenied
+import com.lorenzofelletti.permissions.dispatcher.dsl.doOnGranted
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,6 +19,22 @@ class DispatcherEntryTest {
     fun setUp() {
         val mockActivity = mock(Activity::class.java)
         permissionManager = PermissionManager(mockActivity)
+    }
+
+    @Test
+    fun `test set entry permissions`() {
+        val permissionsArray = arrayOf("permission1", "permission2")
+        val entry = DispatcherEntry(permissionManager, 1)
+        entry checkPermissions permissionsArray
+        assert(entry.permissions.contentEquals(permissionsArray))
+    }
+
+    @Test
+    fun `test set entry permissions with vararg`() {
+        val permissionsArray = arrayOf("permission1", "permission2")
+        val entry = DispatcherEntry(permissionManager, 1)
+        entry.checkPermissions(permissionsArray[0], permissionsArray[1])
+        assert(entry.permissions.contentEquals(permissionsArray))
     }
 
     @Test
