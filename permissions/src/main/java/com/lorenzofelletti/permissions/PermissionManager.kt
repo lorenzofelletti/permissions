@@ -50,7 +50,8 @@ class PermissionManager(val activity: Activity) {
      */
     @PermissionDispatcherDsl
     infix fun buildRequestResultsDispatcher(init: RequestResultsDispatcher.() -> Unit) {
-        dispatcher = RequestResultsDispatcher(this).apply(init)
+        dispatcher = RequestResultsDispatcher(this)
+        dispatcher.apply(init)
     }
 
     /**
@@ -63,80 +64,78 @@ class PermissionManager(val activity: Activity) {
      * [RequestResultsDispatcher] is dispatched.
      *
      * @param requestCode The request code associated to the permissions
-     * @param comingFromRationale true if the method is called from the rationale, defaults to false
-     */
-    fun checkRequestAndDispatch(requestCode: Int, comingFromRationale: Boolean = false) {
-        val permissions =
-            dispatcher.getPermissions(requestCode) ?: throw UnhandledRequestCodeException(
-                requestCode
-            )
-        val permissionsNotGranted = permissions.filter { permission ->
-            ActivityCompat.checkSelfPermission(
-                activity, permission
-            ) != PackageManager.PERMISSION_GRANTED
-
-        }.toTypedArray()
-
-        if (permissionsNotGranted.isEmpty()) {
-            // All permissions are granted
-            dispatcher.getOnGranted(requestCode)?.invoke()
-        } else {
-            // Some permissions are not granted
-            val shouldShowRationale = permissionsNotGranted.any { permission ->
-                shouldShowRequestPermissionRationale(activity, permission)
-            }
-
-            if (shouldShowRationale && !comingFromRationale) {
-                dispatchRationale(permissionsNotGranted, requestCode)
-            } else {
-                ActivityCompat.requestPermissions(activity, permissionsNotGranted, requestCode)
-            }
-        }
-    }
-
-    /**
-     * Checks if the permissions are granted, and dispatches the appropriate action based on the
-     * results.
      *
-     * If some permissions are not granted, the user is asked to grant them.
-     *
-     * If all the permissions are already granted, the action associated to onGranted in the
-     * [RequestResultsDispatcher] is dispatched.
-     *
-     * @param requestCode The request code associated to the permissions
+     * @throws UnhandledRequestCodeException if the request code is not handled by the dispatcher
      */
     infix fun checkRequestAndDispatch(requestCode: Int) {
         checkRequestAndDispatch(requestCode, false)
     }
 
     /**
-     * Checks whether a set of permissions is granted or not.
+     * Checks if the permissions are granted, and dispatches the appropriate action based on the
+     * results.
      *
-     * @param permissions The permissions to be checked
+     * If some permissions are not granted, the user is asked to grant them.
      *
-     * @return true if all permissions are granted, false otherwise
+     * If all the permissions are already granted, the action associated to onGranted in the
+     * [RequestResultsDispatcher] is dispatched.
+     *
+     * Note: `comingFromRationale` is used internally to avoid showing the rationale dialog in loop.
+     *
+     * @param requestCode The request code associated to the permissions
+     * @param comingFromRationale true if the method is called from the rationale, defaults to false
+     *
+     * @throws UnhandledRequestCodeException if the request code is not handled by the dispatcher
      */
-    fun checkPermissionsGranted(permissions: Array<out String>): Boolean {
-        for (permission in permissions) {
-            if (!checkPermissionGranted(activity, permission)) return false
+    internal fun checkRequestAndDispatch(requestCode: Int, comingFromRationale: Boolean = false) {
+        val permissionsNotGranted = dispatcher.getPermissions(requestCode)?.filter { permission ->
+            ActivityCompat.checkSelfPermission(
+                activity, permission
+            ) != PackageManager.PERMISSION_GRANTED
+        }?.toTypedArray() ?: throw UnhandledRequestCodeException(requestCode, activity)
+
+        if (permissionsNotGranted.isEmpty()) {
+            // All permissions are granted
+            dispatcher.dispatchOnGranted(requestCode)
+        } else {
+            // Some permissions are not granted
+            dispatchSomePermissionsNotGranted(
+                permissionsNotGranted,
+                requestCode,
+                comingFromRationale
+            )
         }
-        return true
     }
 
     /**
-     * Checks whether the permissions for a given request code are granted or not.
-     * Throws an [UnhandledRequestCodeException] if the request code is not handled.
+     * Dispatches the case in which some permissions are not granted
      *
-     * @param requestCode The request code associated to the permissions to be checked
-     * @return true if all permissions are granted, false otherwise
+     * @param permissionsNotGranted
+     * @param requestCode
+     * @param comingFromRationale
      */
-    fun checkPermissionsGranted(requestCode: Int): Boolean {
-        val permissions =
-            dispatcher.getPermissions(requestCode) ?: throw UnhandledRequestCodeException(
-                requestCode
-            )
-        return checkPermissionsGranted(permissions)
+    private fun dispatchSomePermissionsNotGranted(
+        permissionsNotGranted: Array<out String>,
+        requestCode: Int,
+        comingFromRationale: Boolean
+    ) {
+        // if not coming from rationale, gets the list of permissions that require rationale to be shown
+        val permissionsRequiringRationale =
+            if (!comingFromRationale) getPermissionsRequiringRationale(permissionsNotGranted) else emptyList()
+
+        // if some permissions require rationale, show rationale, otherwise ask for permissions
+        // Note: if coming from rationale, the list will be empty, so the else branch will be executed
+        if (permissionsRequiringRationale.isNotEmpty()) {
+            dispatcher.showRationale(requestCode, permissionsRequiringRationale)
+        } else {
+            ActivityCompat.requestPermissions(activity, permissionsNotGranted, requestCode)
+        }
     }
+
+    private fun getPermissionsRequiringRationale(permissionsNotGranted: Array<out String>) =
+        permissionsNotGranted.filter { permission ->
+            shouldShowRequestPermissionRationale(activity, permission)
+        }.toList()
 
     /**
      * Checks the result of a permission request, and dispatches the appropriate action.
@@ -152,42 +151,12 @@ class PermissionManager(val activity: Activity) {
         dispatcher.dispatchAction(requestCode, grantResults)?.invoke()
     }
 
-    /**
-     * Checks whether a permission is granted in the context.
-     *
-     * @param context The context to be used for checking the permission
-     * @param permission The permission to be checked
-     *
-     * @return true if the permission is granted, false otherwise
-     */
-    private fun checkPermissionGranted(context: Context, permission: String): Boolean {
-        return ActivityCompat.checkSelfPermission(
-            context, permission
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    /**
-     * Dispatches the rationale action associated to the request code, if any.
-     *
-     * @param permissionsNotGranted The permissions that are not granted
-     * @param requestCode The request code associated to the permissions
-     */
-    private fun dispatchRationale(permissionsNotGranted: Array<out String>, requestCode: Int) {
-        /* if a rationale is defined, dispatch it, otherwise it calls checkRequestAndDispatch with
-         * comingFromRationale = true */
-        val toInvoke = dispatcher.getOnShowRationale(requestCode) ?: fun(
-            _: List<String>, requestCode: Int
-        ) {
-            checkRequestAndDispatch(requestCode, true)
-        }
-        toInvoke.invoke(permissionsNotGranted.toList(), requestCode)
-    }
 }
 
 /**
  * Exception thrown when the request code is not handled by the [RequestResultsDispatcher] object.
  */
-class UnhandledRequestCodeException(requestCode: Int) : Throwable() {
+class UnhandledRequestCodeException(requestCode: Int, context: Context) : Throwable() {
     override val message: String =
-        "Request code $requestCode is not handled by the RequestResultsDispatcher object. Please add a withRequestCode block to the buildRequestResultsDispatcher function."
+        context.getString(R.string.unhandled_request_code_exception_message, requestCode)
 }

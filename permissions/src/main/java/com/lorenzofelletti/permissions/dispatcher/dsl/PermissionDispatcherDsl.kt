@@ -4,6 +4,7 @@ package com.lorenzofelletti.permissions.dispatcher.dsl
 
 import android.app.AlertDialog
 import android.app.Dialog
+import com.lorenzofelletti.permissions.R
 import com.lorenzofelletti.permissions.dispatcher.DispatcherEntry
 import com.lorenzofelletti.permissions.dispatcher.RequestResultsDispatcher
 
@@ -18,13 +19,13 @@ abstract class PermissionDispatcher
  */
 @PermissionDispatcherDsl
 infix fun DispatcherEntry.checkPermissions(permissions: Array<out String>) {
-    this.permissions = permissions
+    this.setPermissions(permissions)
 }
 
 @JvmName("checkPermissionsVararg")
 @PermissionDispatcherDsl
 fun DispatcherEntry.checkPermissions(vararg permissions: String) {
-    this.permissions = arrayOf(*permissions)
+    this.setPermissions(arrayOf(*permissions))
 }
 
 /**
@@ -70,16 +71,29 @@ fun DispatcherEntry.rationale(onShowRationale: (List<String>, Int) -> Unit) {
 @PermissionDispatcherDsl
 fun DispatcherEntry.showRationaleDialog(
     message: String,
-    positiveButtonText: String = "OK",
-    negativeButtonText: String = "Cancel",
+    positiveButtonText: String = "",
+    negativeButtonText: String = "",
     onNegativeButtonPressed: (() -> Unit) = {}
 ) {
+    val actualPositiveButtonText =
+        positiveButtonText.ifEmpty {
+            dispatcher.manager.activity.getString(
+                R.string.rationale_dialog_ok
+            )
+        }
+    val actualNegativeButtonText = negativeButtonText.ifEmpty {
+        dispatcher.manager.activity.getString(
+            R.string.rationale_dialog_cancel
+        )
+    }
+
     rationale { _, _ ->
+        val manager = dispatcher.manager
         manager.activity.runOnUiThread {
             AlertDialog.Builder(manager.activity).setMessage(message)
-                .setPositiveButton(positiveButtonText) { _, _ ->
+                .setPositiveButton(actualPositiveButtonText) { _, _ ->
                     manager.checkRequestAndDispatch(requestCode, comingFromRationale = true)
-                }.setNegativeButton(negativeButtonText) { _, _ ->
+                }.setNegativeButton(actualNegativeButtonText) { _, _ ->
                     onNegativeButtonPressed.invoke()
                 }.show()
         }
@@ -109,7 +123,7 @@ fun DispatcherEntry.showRationaleDialog(
     dialog: AlertDialog,
 ) {
     rationale { _, _ ->
-        manager.activity.runOnUiThread {
+        dispatcher.manager.activity.runOnUiThread {
             dialog.show()
         }
     }
@@ -137,7 +151,7 @@ fun DispatcherEntry.showRationaleDialog(
 fun RequestResultsDispatcher.withRequestCode(
     requestCode: Int, init: DispatcherEntry.() -> Unit
 ) {
-    entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
+    entries[requestCode] = DispatcherEntry(manager.dispatcher, requestCode).apply(init)
 }
 
 /**
@@ -159,7 +173,7 @@ fun RequestResultsDispatcher.removeEntry(requestCode: Int) {
 @PermissionDispatcherDsl
 fun RequestResultsDispatcher.addEntry(requestCode: Int, init: DispatcherEntry.() -> Unit) {
     if (entries[requestCode] == null) {
-        entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
+        entries[requestCode] = DispatcherEntry(manager.dispatcher, requestCode).apply(init)
     }
 }
 
@@ -197,5 +211,5 @@ fun RequestResultsDispatcher.replaceEntryOnDenied(requestCode: Int, onDenied: ()
 fun RequestResultsDispatcher.replaceEntry(
     requestCode: Int, init: DispatcherEntry.() -> Unit
 ) {
-    entries[requestCode] = DispatcherEntry(manager, requestCode).apply(init)
+    entries[requestCode] = DispatcherEntry(manager.dispatcher, requestCode).apply(init)
 }

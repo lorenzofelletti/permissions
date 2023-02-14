@@ -1,6 +1,5 @@
 package com.lorenzofelletti.permissions.dispatcher
 
-import com.lorenzofelletti.permissions.PermissionManager
 import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcher
 
 
@@ -10,13 +9,12 @@ import com.lorenzofelletti.permissions.dispatcher.dsl.PermissionDispatcher
  * in case the permissions are granted or denied.
  */
 class DispatcherEntry(
-    internal val manager: PermissionManager, val requestCode: Int
+    internal val dispatcher: RequestResultsDispatcher, val requestCode: Int
 ) : PermissionDispatcher() {
     /**
      * The permissions associated to this entry
      */
-    lateinit var permissions: Array<out String>
-        internal set
+    private lateinit var permissions: Array<out String>
 
     /**
      * The action to be dispatched if the permissions are granted.
@@ -35,6 +33,12 @@ class DispatcherEntry(
      */
     var onShowRationale: ((List<String>, requestCode: Int) -> Unit)? = null
         internal set
+
+    internal fun setPermissions(permissions: Array<out String>) {
+        this.permissions = permissions
+    }
+
+    internal fun getPermissions(): Array<out String> = permissions
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

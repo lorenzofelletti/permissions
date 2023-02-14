@@ -18,14 +18,23 @@ class RequestResultsDispatcher(internal val manager: PermissionManager) : Permis
         }
 
     internal fun getPermissions(requestCode: Int): Array<out String>? =
-        entries[requestCode]?.permissions
+        entries[requestCode]?.getPermissions()
 
-    internal fun getOnGranted(requestCode: Int): (() -> Unit)? = entries[requestCode]?.onGranted
+    internal fun dispatchOnGranted(requestCode: Int) {
+        entries[requestCode]?.onGranted?.invoke()
+    }
 
-    internal fun getOnDenied(requestCode: Int): (() -> Unit)? = entries[requestCode]?.onDenied
-
-    internal fun getOnShowRationale(requestCode: Int): ((List<String>, Int) -> Unit)? =
-        entries[requestCode]?.onShowRationale
+    /**
+     * Shows the rationale for the permissions associated to the given request code, otherwise
+     * it calls [PermissionManager.checkRequestAndDispatch] with `comingFromRationale = true`.
+     *
+     * @param requestCode The request code associated to the permissions
+     * @param permissions The permissions requiring a rationale
+     */
+    internal fun showRationale(requestCode: Int, permissions: List<String>) {
+        entries[requestCode]?.onShowRationale?.invoke(permissions, requestCode)
+            ?: manager.checkRequestAndDispatch(requestCode, true)
+    }
 
     /**
      * Checks the results of a permission request

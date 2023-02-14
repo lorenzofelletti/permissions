@@ -1,13 +1,32 @@
 # Permissions
 [![](https://jitpack.io/v/lorenzofelletti/permissions.svg)](https://jitpack.io/#lorenzofelletti/permissions)
 
-## Easy permissions management library for Android
+## Easy Permissions Management Library for Android
 
-An easy to use permissions management library designed to be used with Kotlin.
+An easy to use permissions management library written in Kotlin.
 
-The library is deployed on JitPack here, follow the steps indicated in the link to add it to your project.
+### Import the Library
+The library is deployed on JitPack [here](https://jitpack.io/#lorenzofelletti/permissions).
+To add it to your project, add to `settings.gradle`:
+```Groovy
+dependencyResolutionManagement {
+  ...
+  repositories {
+    ...
+    maven { url 'https://jitpack.io' }
+  }
+}
+```
+And to your module level build.gradle:
+```Groovy
+dependencies {
+  ...
+  implementation 'com.github.lorenzofelletti:permissions:0.4.2'
+}
+```
 
-To use it in your project, just:
+### Usage
+To use the library in your project, just:
 * Declare the permissions your app will use in your application's Manifest
   * Example: add to the app `AndroidManifest.xml`
   ```xml
@@ -48,9 +67,7 @@ To use it in your project, just:
 * Call `permissionManager.checkRequestAndDispatch` where you want to check for a set of permissions (and ask them if not granted)
   * Example: in your Activity, where you want to check (and request) permissions add
   ```Kotlin
-  permissionManager.checkRequestAndDispatch(
-            POSITION_REQUEST_CODE
-        )
+  permissionManager checkRequestAndDispatch POSITION_REQUEST_CODE
   ```
 * Override `onRequestPermissionsResult` and call `PermissionsUtilities.dispatchOnRequestPermissionsResult` in it
   * Example: inside your `MainActivity`
@@ -64,3 +81,7 @@ To use it in your project, just:
         permissionManager.dispatchOnRequestPermissionsResult(requestCode, grantResults)
     }
   ```
+
+## Contributing
+All kinds of contributions are welcome (bug reports, feature requests, pull requests, etc.).
+Suggestions and improvements on documentation, tests, code quality, translations, etc. are also welcome.

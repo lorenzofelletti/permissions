@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="unhandled_request_code_exception_message" translatable="false">Request code %d is not handled by the RequestResultsDispatcher object. Please add a withRequestCode block to the buildRequestResultsDispatcher function.</string>
+    <string name="rationale_dialog_ok">OK</string>
+    <string name="rationale_dialog_cancel">Cancel</string>
+</resources>
