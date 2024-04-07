@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.lorenzofelletti.permissions'
+    namespace 'com.lorenzofelletti.permissionsexample'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.lorenzofelletti.permissions"
+        applicationId "com.lorenzofelletti.permissionsexample"
         minSdk 26
         targetSdk 33
         versionCode 1
